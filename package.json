@@ -1,0 +1,14 @@
+{
+  "name": "serverjoiner",
+  "version": "0.0.1",
+  "description": "Selfbot that joins Discord servers via invite code",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kjanuska",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.24.0"
+  }
+}
