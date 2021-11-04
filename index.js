@@ -26,7 +26,8 @@ async function join()
             }, waitTime * index);
         })
         userInput.close();
-    });}
+    });
     console.log("All accounts joined!");
+}
 
 join();
