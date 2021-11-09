@@ -2,6 +2,8 @@ import requests
 import time
 import random
 
+from requests.api import head
+
 def join_and_verify():
     token_file = open("tokens.txt", "r")
     tokens = token_file.readlines()
@@ -15,17 +17,32 @@ def join_and_verify():
     message_components = message_components.replace(
         "https://discord.com/channels/", ""
     ).split("/")
+    guildID = message_components[0]
     channelID = message_components[1]
     messageID = message_components[2]
 
     for token in tokens:
-        header = {"authorization": token}
+        header = {"authorization": token.strip()}
         # join server
+        print("Joining server")
         requests.post(
             f"https://discordapp.com/api/v9/invites/{INVITE_CODE}", headers=header
         )
-        time.sleep(10)
+        time.sleep(7)
+        print("Verifying")
+        # need to verify server rules first
+        resp = requests.get(f"https://discord.com/api/v9/guilds/{guildID}/member-verification?with_guild=false&invite_code={INVITE_CODE}", headers=header)
+        print(resp.content)
+        time.sleep(2)
+        verify_header = {
+            "authorization": header["authorization"],
+            "content-type": "application/json"
+        }
+        resp = requests.put(f"https://discord.com/api/v9/guilds/{guildID}/requests/@me", headers=verify_header, json=resp.json())
+        print(resp.content)
+        time.sleep(7)
         # get message top emoji
+        print("Getting emoji")
         resp = requests.get(
             f"https://discord.com/api/v9/channels/{channelID}/messages?limit=50",
             headers=header,
@@ -50,6 +67,7 @@ def join_and_verify():
 
         time.sleep(2)
         # react to emoji
+        print("Reacting")
         requests.put(
             f"https://discord.com/api/v9/channels/{channelID}/messages/{messageID}/reactions/{emoji['name'] + emoji['id']}/%40me",
             headers=header,
