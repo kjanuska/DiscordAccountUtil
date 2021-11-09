@@ -2,14 +2,13 @@ import requests
 import time
 import random
 
-from requests.api import head
-
 def join_and_verify():
     token_file = open("tokens.txt", "r")
     tokens = token_file.readlines()
 
     INVITE_CODE = input("Invite code/link: ")
     INVITE_CODE = INVITE_CODE.replace("https://discord.gg/", "")
+    BASE = "https://discordapp.com/api/v9"
     message_components = input("Link to verify message: ")
     # 0 = server ID
     # 1 = channel ID
@@ -25,26 +24,35 @@ def join_and_verify():
         header = {"authorization": token.strip()}
         # join server
         print("Joining server")
-        requests.post(
-            f"https://discordapp.com/api/v9/invites/{INVITE_CODE}", headers=header
+        invite_resp = requests.post(
+            f"{BASE}/invites/{INVITE_CODE}", headers=header
         )
-        time.sleep(7)
-        print("Verifying")
+        invite_resp_json = invite_resp.json()
+        print("Invited by " + invite_resp_json["inviter"]["username"] + "#" + invite_resp_json["inviter"]["discriminator"] + " to " + invite_resp_json["guild"]["name"])
+        time.sleep(5)
+
+        # ======================================================================
+        print("Checking for server rules")
         # need to verify server rules first
-        resp = requests.get(f"https://discord.com/api/v9/guilds/{guildID}/member-verification?with_guild=false&invite_code={INVITE_CODE}", headers=header)
-        print(resp.content)
-        time.sleep(2)
-        verify_header = {
-            "authorization": header["authorization"],
-            "content-type": "application/json"
-        }
-        resp = requests.put(f"https://discord.com/api/v9/guilds/{guildID}/requests/@me", headers=verify_header, json=resp.json())
-        print(resp.content)
-        time.sleep(7)
+        resp = requests.get(f"{BASE}/guilds/{guildID}/member-verification?with_guild=false&invite_code={INVITE_CODE}", headers=header)
+        resp_json = resp.json()
+        time.sleep(3)
+        if not "code" in resp_json.keys():
+            print("Verifying")
+            verify_header = {
+                "authorization": header["authorization"],
+                "content-type": "application/json"
+            }
+            resp = requests.put(f"{BASE}/guilds/{guildID}/requests/@me", headers=verify_header, json=resp_json)
+            time.sleep(5)
+        else:
+            print("No rules to verify")
+
+        # ======================================================================
         # get message top emoji
         print("Getting emoji")
         resp = requests.get(
-            f"https://discord.com/api/v9/channels/{channelID}/messages?limit=50",
+            f"{BASE}/channels/{channelID}/messages?limit=50",
             headers=header,
         )
         message_list = resp.json()
@@ -64,14 +72,17 @@ def join_and_verify():
             )
         else:
             emoji["id"] = "%3A" + emoji["id"]
-
         time.sleep(2)
+
+        # ======================================================================
         # react to emoji
         print("Reacting")
         requests.put(
-            f"https://discord.com/api/v9/channels/{channelID}/messages/{messageID}/reactions/{emoji['name'] + emoji['id']}/%40me",
+            f"{BASE}/channels/{channelID}/messages/{messageID}/reactions/{emoji['name'] + emoji['id']}/%40me",
             headers=header,
         )
-        time.sleep(random.randint(10, 30))
+        sleep_time = random.randint(5, 15)
+        print("Sleeping until next invite")
+        time.sleep(sleep_time)
 
 join_and_verify()
