@@ -2,13 +2,14 @@ import requests
 import time
 import random
 
-def join_and_verify():
-    token_file = open("tokens.txt", "r")
-    tokens = token_file.readlines()
+token_file = open("tokens.txt", "r")
+tokens = token_file.read().splitlines()
+BASE = "https://discordapp.com/api/v9"
 
+def join_and_verify():
     INVITE_CODE = input("Invite code/link: ")
     INVITE_CODE = INVITE_CODE.replace("https://discord.gg/", "")
-    BASE = "https://discordapp.com/api/v9"
+
     message_components = input("Link to verify message: ")
     # 0 = server ID
     # 1 = channel ID
@@ -21,7 +22,7 @@ def join_and_verify():
     messageID = message_components[2]
 
     for token in tokens:
-        header = {"authorization": token.strip()}
+        header = {"authorization": token}
         # join server
         print("Joining server")
         invite_resp = requests.post(
@@ -85,4 +86,15 @@ def join_and_verify():
         print("Sleeping until next invite")
         time.sleep(sleep_time)
 
-join_and_verify()
+def leave_all_guilds():
+    for token in tokens:
+        header = {"authorization": token}
+        resp = requests.get(f"{BASE}/users/@me/guilds", headers=header)
+        time.sleep(2)
+        for server in resp.json():
+            guild_id = server["id"]
+            requests.delete(f"{BASE}/users/@me/guilds/{guild_id}", headers=header)
+            time.sleep(2)
+        time.sleep(100)
+
+leave_all_guilds()
