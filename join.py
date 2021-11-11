@@ -5,8 +5,10 @@ import random
 token_file = open("tokens.txt", "r")
 tokens = token_file.read().splitlines()
 BASE = "https://discordapp.com/api/v9"
+dev = False
 
 def join_and_verify():
+    invited_num = 0
     INVITE_CODE = input("Invite code/link: ")
     INVITE_CODE = INVITE_CODE.replace("https://discord.gg/", "")
 
@@ -24,22 +26,28 @@ def join_and_verify():
     for token in tokens:
         header = {"authorization": token}
         # join server
-        print("Joining server")
+        if dev:
+            print("Joining server")
         invite_resp = requests.post(
             f"{BASE}/invites/{INVITE_CODE}", headers=header
         )
         invite_resp_json = invite_resp.json()
-        print("Invited by " + invite_resp_json["inviter"]["username"] + "#" + invite_resp_json["inviter"]["discriminator"] + " to " + invite_resp_json["guild"]["name"])
+        inviter = invite_resp_json["inviter"]["username"] + "#" + invite_resp_json["inviter"]["discriminator"]
+        server = invite_resp_json["guild"]["name"]
+        if dev:
+            print("Invited by " + inviter  + " to " + server)
         time.sleep(5)
 
         # ======================================================================
-        print("Checking for server rules")
+        if dev:
+            print("Checking for server rules")
         # need to verify server rules first
         resp = requests.get(f"{BASE}/guilds/{guildID}/member-verification?with_guild=false&invite_code={INVITE_CODE}", headers=header)
         resp_json = resp.json()
         time.sleep(3)
         if not "code" in resp_json.keys():
-            print("Verifying")
+            if dev:
+                print("Verifying")
             verify_header = {
                 "authorization": header["authorization"],
                 "content-type": "application/json"
@@ -47,11 +55,13 @@ def join_and_verify():
             resp = requests.put(f"{BASE}/guilds/{guildID}/requests/@me", headers=verify_header, json=resp_json)
             time.sleep(5)
         else:
-            print("No rules to verify")
+            if dev:
+                print("No rules to verify")
 
         # ======================================================================
         # get message top emoji
-        print("Getting emoji")
+        if dev:
+            print("Getting emoji")
         resp = requests.get(
             f"{BASE}/channels/{channelID}/messages?limit=50",
             headers=header,
@@ -77,14 +87,17 @@ def join_and_verify():
 
         # ======================================================================
         # react to emoji
-        print("Reacting")
+        if dev:
+            print("Reacting")
         requests.put(
             f"{BASE}/channels/{channelID}/messages/{messageID}/reactions/{emoji['name'] + emoji['id']}/%40me",
             headers=header,
         )
-        sleep_time = random.randint(5, 15)
-        print("Sleeping until next invite")
-        time.sleep(sleep_time)
+        invited_num += 1
+        if dev:
+            print("Sleeping until next invite")
+        print(inviter + " invited " + invited_num + " accounts to " + server)
+        time.sleep(random.randint(5, 15))
 
 def leave_all_guilds():
     for token in tokens:
