@@ -96,10 +96,17 @@ def join_and_verify():
         invited_num += 1
         if dev:
             print("Sleeping until next invite")
-        print(inviter + " invited " + invited_num + " accounts to " + server)
+        print(inviter + " invited " + str(invited_num) + " accounts to " + server)
         time.sleep(random.randint(5, 15))
 
-def leave_all_guilds():
+def leave_server():
+    SERVER_ID = input("Server id: ")
+    for token in tokens:
+        header = {"authorization": token}
+        requests.delete(f"{BASE}/users/@me/guilds/{SERVER_ID}", headers=header)
+        time.sleep(10)
+
+def leave_all_servers():
     for token in tokens:
         header = {"authorization": token}
         resp = requests.get(f"{BASE}/users/@me/guilds", headers=header)
@@ -108,6 +115,13 @@ def leave_all_guilds():
             guild_id = server["id"]
             requests.delete(f"{BASE}/users/@me/guilds/{guild_id}", headers=header)
             time.sleep(2)
-        time.sleep(100)
+        time.sleep(10)
 
-leave_all_guilds()
+selection = int(input("1. Join\n2. Leave specific server\n3. Leave all servers\n: "))
+
+if selection == 1:
+    join_and_verify()
+elif selection == 2:
+    leave_server()
+elif selection == 3:
+    leave_all_servers()
