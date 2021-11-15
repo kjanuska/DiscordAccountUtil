@@ -8,24 +8,19 @@ import os
 
 load_dotenv()
 
-token_file = open("tokens.txt", "r")
-tokens_list = token_file.read().splitlines()
-BASE = "https://discordapp.com/api/v9"
+ENTRY = "https://discordapp.com/api/v9"
 
 CONNECTION_STRING = f'mongodb+srv://kjanuska:{os.environ["MONGO_PASSWORD"]}@cluster0.7zdns.mongodb.net/accounts?retryWrites=true&w=majority'
 client = MongoClient(CONNECTION_STRING)
-db = client.accounts
-tokens = db.tokens
+tokens_db = client.accounts.tokens
 
 encryptor = Fernet(os.environ["ENCRYPTION_KEY"])
+tokens = []
 
-for token in tokens_list:
-    doc = {
-        "token" : encryptor.encrypt(token.encode())
-    }
-    tokens.insert_one(doc)
-    print("inserted")
-    time.sleep(2)
+def init():
+    for token_obj in tokens_db.find():
+        token = encryptor.decrypt(token_obj["token"]).decode()
+        tokens.append(token)
 
 def num_available():
     return len(tokens)
@@ -51,7 +46,7 @@ def join(invite_code, message, emoji):
         header = {"authorization": token}
         # join server
         invite_resp = requests.post(
-            f"{BASE}/invites/{INVITE_CODE}", headers=header
+            f"{ENTRY}/invites/{INVITE_CODE}", headers=header
         )
         invite_resp_json = invite_resp.json()
         inviter = invite_resp_json["inviter"]["username"] + "#" + invite_resp_json["inviter"]["discriminator"]
@@ -60,7 +55,7 @@ def join(invite_code, message, emoji):
 
         # ======================================================================
         # need to verify server rules first
-        resp = requests.get(f"{BASE}/guilds/{guildID}/member-verification?with_guild=false&invite_code={INVITE_CODE}", headers=header)
+        resp = requests.get(f"{ENTRY}/guilds/{guildID}/member-verification?with_guild=false&invite_code={INVITE_CODE}", headers=header)
         resp_json = resp.json()
         time.sleep(3)
         if not "code" in resp_json.keys():
@@ -68,14 +63,14 @@ def join(invite_code, message, emoji):
                 "authorization": header["authorization"],
                 "content-type": "application/json"
             }
-            resp = requests.put(f"{BASE}/guilds/{guildID}/requests/@me", headers=verify_header, json=resp_json)
+            resp = requests.put(f"{ENTRY}/guilds/{guildID}/requests/@me", headers=verify_header, json=resp_json)
             time.sleep(5)
 
         if verification_message == True:
             # ======================================================================
             # get message top emoji
             resp = requests.get(
-                f"{BASE}/channels/{channelID}/messages?limit=50",
+                f"{ENTRY}/channels/{channelID}/messages?limit=50",
                 headers=header,
             )
             message_list = resp.json()
@@ -100,7 +95,7 @@ def join(invite_code, message, emoji):
             # ======================================================================
             # react to emoji
             requests.put(
-                f"{BASE}/channels/{channelID}/messages/{messageID}/reactions/{emoji['name'] + emoji['id']}/%40me",
+                f"{ENTRY}/channels/{channelID}/messages/{messageID}/reactions/{emoji['name'] + emoji['id']}/%40me",
                 headers=header,
             )
             
@@ -113,16 +108,22 @@ def join(invite_code, message, emoji):
 def leave_server(server_ID):
     for token in tokens:
         header = {"authorization": token}
-        requests.delete(f"{BASE}/users/@me/guilds/{server_ID}", headers=header)
+        requests.delete(f"{ENTRY}/users/@me/guilds/{server_ID}", headers=header)
         time.sleep(10)
 
 def leave_all_servers():
     for token in tokens:
         header = {"authorization": token}
-        resp = requests.get(f"{BASE}/users/@me/guilds", headers=header)
+        resp = requests.get(f"{ENTRY}/users/@me/guilds", headers=header)
         time.sleep(2)
         for server in resp.json():
             guild_id = server["id"]
-            requests.delete(f"{BASE}/users/@me/guilds/{guild_id}", headers=header)
+            requests.delete(f"{ENTRY}/users/@me/guilds/{guild_id}", headers=header)
             time.sleep(2)
         time.sleep(10)
+
+def create_account():
+    token_doc = {
+        "token" : encryptor.encrypt(token.encode())
+    }
+    tokens.insert_one(token_doc)
