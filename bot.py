@@ -4,26 +4,9 @@ from dotenv import load_dotenv
 from discord_slash.utils.manage_commands import create_option, create_choice
 import os
 
-from pymongo import MongoClient
-
 import util
 
 load_dotenv()
-
-CONNECTION_STRING = f'mongodb+srv://kjanuska:{os.environ["MONGO_PASSWORD"]}@cluster0.7zdns.mongodb.net/accounts?retryWrites=true&w=majority'
-dbClient = MongoClient(CONNECTION_STRING)
-db = dbClient.accounts
-tokens = db.tokens
-
-testDoc = {
-    "token" : "asdfasdfasdfasdfasdf"
-}
-
-tokens.insert_one(testDoc)
-
-token_list = db.tokens.find()
-for token in token_list:
-    print(token)
 
 TOKEN = os.environ["TOKEN"]
 GUILD_ID = [int(os.environ["GUILD_ID"])]

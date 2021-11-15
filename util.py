@@ -1,10 +1,31 @@
 import requests
 import time
 import random
+from cryptography.fernet import Fernet
+from pymongo import MongoClient
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 token_file = open("tokens.txt", "r")
-tokens = token_file.read().splitlines()
+tokens_list = token_file.read().splitlines()
 BASE = "https://discordapp.com/api/v9"
+
+CONNECTION_STRING = f'mongodb+srv://kjanuska:{os.environ["MONGO_PASSWORD"]}@cluster0.7zdns.mongodb.net/accounts?retryWrites=true&w=majority'
+client = MongoClient(CONNECTION_STRING)
+db = client.accounts
+tokens = db.tokens
+
+encryptor = Fernet(os.environ["ENCRYPTION_KEY"])
+
+for token in tokens_list:
+    doc = {
+        "token" : encryptor.encrypt(token.encode())
+    }
+    tokens.insert_one(doc)
+    print("inserted")
+    time.sleep(2)
 
 def num_available():
     return len(tokens)
