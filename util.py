@@ -1,3 +1,4 @@
+import json
 import requests
 import time
 import random
@@ -124,10 +125,10 @@ def leave_all_servers():
             time.sleep(2)
         time.sleep(10)
 
-def get_captcha_key():
+def get_captcha_key(url_endpoint):
     CAP_KEY = os.environ["2CAP_API_KEY"]
     SITE_KEY = "f5561ba9-8f1e-40ca-9b5b-a0b3f719ef34"
-    resp = requests.post(f"http://2captcha.com/in.php?key={CAP_KEY}&method=hcaptcha&sitekey={SITE_KEY}&pageurl=https://discord.com/register&json=1").json()
+    resp = requests.post(f"http://2captcha.com/in.php?key={CAP_KEY}&method=hcaptcha&sitekey={SITE_KEY}&pageurl=https://discord.com/{url_endpoint}&json=1").json()
     if resp["status"] != 1:
         print("Error sending catpcha to provider:\n" + resp)
         return
@@ -135,6 +136,26 @@ def get_captcha_key():
     time.sleep(20)
     resp = requests.get(f"http://2captcha.com/res.php?key={CAP_KEY}&action=get&id={captcha_id}&json=1").json()
     print(resp)
+
+def verify_email(token):
+    # create account using catchall and then access verification link from main gmail
+    
+    VERIFY_ENDPOINT = "/auth/verify"
+    # use gmail API to fetch emails and post a request to the verification URL
+    header = {
+        "authorization" : token,
+        "content-type": "application/json",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+    }
+    data = {
+        "token": verification_token
+    }
+
+    resp = requests.post(f"{ENTRY}{VERIFY_ENDPOINT}", headers=header, json=data)
+    if resp.status_code == 400:
+        catpcha_key = get_captcha_key("verify")
+        data["captcha_key"] = catpcha_key
+        resp = requests.post(f"{ENTRY}{VERIFY_ENDPOINT}", headers=header, json=data)
 
 def verify_phone(token):
     # verify phone number
@@ -167,7 +188,7 @@ def create_account():
         "content-type": "application/json",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
     }
-    captcha_key = get_captcha_key()
+    captcha_key = get_captcha_key("register")
 
     data = {
         "captcha_key": captcha_key,
@@ -186,8 +207,5 @@ def create_account():
     }
     tokens.insert_one(token_doc)
 
-    # verify through email
-    # create account using catchall and then access verification link from main gmail
-    # use gmail API to fetch emails and post a request to the verification URL
-
+    verify_email(token)
     verify_phone(token)
