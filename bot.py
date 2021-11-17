@@ -14,6 +14,10 @@ GUILD_ID = [int(os.environ["GUILD_ID"])]
 client = commands.Bot(command_prefix=".")
 slash = SlashCommand(client, sync_commands=True)
 
+@client.event
+async def on_ready():
+    util.init()
+
 @slash.slash(
     name="join",
     guild_ids=GUILD_ID,
