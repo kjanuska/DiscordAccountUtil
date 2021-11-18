@@ -2,6 +2,8 @@ import requests
 import time
 import random
 from cryptography.fernet import Fernet
+import string
+import secrets
 from pymongo import MongoClient
 
 import globals
@@ -126,13 +128,6 @@ def leave_all_servers():
         time.sleep(10)
 
 def create_account():
-    REGISTER_ENDPOINT = "/auth/register"
-    header = {
-        "content-type": "application/json",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
-    }
-    captcha_key = verification.get_captcha_key("register")
-
     # ==========================================================================
     # Generate date of bith
     month = random.randint(1, 12)
@@ -142,10 +137,20 @@ def create_account():
     if day < 10:
         day = "0" + str(day)
     date = f"{random.randint(1970, 2001)}-{month}-{day}"
+    print(date)
     # ==========================================================================
 
     # ==========================================================================
-    # Generate email using catchall
+    # Generate username
+    names = open('names.txt','r').read().splitlines()
+    adjectives = open('adjectives.txt','r').read().splitlines()
+    username = random.choice(names) + " " + random.choice(adjectives)
+    print(username)
+    # ==========================================================================
+
+    # ==========================================================================
+    # Generate email using username + catchall
+    email = f"{username}@{globals.CATCHALL}"
     # ==========================================================================
 
     # ==========================================================================
@@ -153,21 +158,25 @@ def create_account():
     # ==========================================================================
 
     # ==========================================================================
-    # Generate password
+    # Generate 20 character password
+    alphabet = string.ascii_letters + string.digits
+    password = ''.join(secrets.choice(alphabet) for i in range(20))
     # ==========================================================================
 
-    # ==========================================================================
-    # Generate username
-    # ==========================================================================
-    
+    REGISTER_ENDPOINT = "/auth/register"
+    header = {
+        "content-type": "application/json",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+    }
+    captcha_key = verification.get_captcha_key("register")
     data = {
         "captcha_key": captcha_key,
         "consent": True,
         "date_of_birth": date,
-        # "email": email,
+        "email": email,
         # "fingerprint": fingerprint,
-        # "password": password,
-        # "username": username
+        "password": password,
+        "username": username
     }
 
     resp = requests.post(f"{globals.ENTRY}{REGISTER_ENDPOINT}", headers=header, json=data).json()
@@ -179,3 +188,23 @@ def create_account():
 
     verification.verify_email(token)
     verification.verify_phone(token)
+
+def gen_username():
+    # Generate username
+    names = open('names.txt','r').read().splitlines()
+    adjectives = open('adjectives.txt','r').read().splitlines()
+
+    choice = random.randint(0, 3)
+    match choice:
+        case 0:
+            print(0)
+        case 1:
+            print(1)
+        case 2:
+            print(2)
+        case 3:
+            print(3)
+    username = random.choice(adjectives) + " " + random.choice(names)
+    print(username)
+
+gen_username

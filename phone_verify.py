@@ -32,7 +32,6 @@ def update_bearer_token():
 
 
 def get_balance():
-    update_bearer_token()
     USER_ENDPOINT = "/Users"
     header = {
         "Authorization": f"Bearer {bearer_token}"
@@ -42,7 +41,6 @@ def get_balance():
 
 
 def get_cost():
-    update_bearer_token()
     header = {
         "Authorization": f"Bearer {bearer_token}"
     }
@@ -51,11 +49,11 @@ def get_cost():
 
 
 def available_verifications():
+    update_bearer_token()
     return math.floor(get_balance() / get_cost())
 
 
 def request_phone_number():
-    update_bearer_token()
     VERIFICATION_ENDPOINT = "/Verifications"
     header = {
         "Authorization": f"Bearer {bearer_token}"
@@ -73,7 +71,6 @@ def request_phone_number():
     return [phone_number, request_id]
 
 def get_code(request_id):
-    update_bearer_token()
     VERIFICATION_ENDPOINT = f"/Verifications/{request_id}"
     header = {
         "Authorization": f"Bearer {bearer_token}"
@@ -94,12 +91,13 @@ def verify_phone(token):
         "content-type": "application/json",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
     }
+    update_bearer_token()
     verification_info = request_phone_number()
     data = {"phone": verification_info[0]}
 
     # send code to phone number
     resp = requests.post(f"{globals.ENTRY}{PHONE_ENDPOINT}", headers=header, json=data)
-
+    time.sleep(5)
     CODE_ENDPOINT = "/phone-verifications/verify"
     # get code from Text Verified
     code = get_code(verification_info[1])
