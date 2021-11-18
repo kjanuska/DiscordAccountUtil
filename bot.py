@@ -8,7 +8,7 @@ import util
 
 load_dotenv()
 
-TOKEN = os.environ["TOKEN"]
+TOKEN = os.environ["BOT_TOKEN"]
 GUILD_ID = [int(os.environ["GUILD_ID"])]
 
 client = commands.Bot(command_prefix=".")
@@ -20,6 +20,7 @@ async def on_ready():
 
 @slash.slash(
     name="join",
+    description="Invite accounts to a server",
     guild_ids=GUILD_ID,
     options=[
         create_option(
@@ -43,12 +44,13 @@ async def on_ready():
     ],
 )
 async def _join(ctx, invite, message, emoji):
-    available_accnts = util.num_available()
+    available_accnts = util.num_invitable()
     await ctx.send(content=f"Inviting {available_accnts} accounts")
     util.join(invite, message, emoji)
 
 @slash.slash(
     name="leave-server",
+    description="Make all accounts leave a specific server",
     guild_ids=GUILD_ID,
     options=[
         create_option(
@@ -65,10 +67,20 @@ async def _leave_server(ctx, server_ID):
 
 @slash.slash(
     name="leave-all-servers",
+    description="Make all accounts leave all servers they are currently in",
     guild_ids=GUILD_ID,
 )
 async def _leave_all_servers(ctx):
     await ctx.send(content=f"All accounts leaving all servers")
     util.leave_all_servers()
+
+@slash.slash(
+    name="creatable",
+    description="Get the number of accounts you can create",
+    guild_ids=GUILD_ID
+)
+async def _creatable(ctx):
+    max_creatable = util.num_creatable()
+    await ctx.send(content=f"You can create {max_creatable} accounts")
 
 client.run(TOKEN)

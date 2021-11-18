@@ -5,6 +5,8 @@ from cryptography.fernet import Fernet
 from pymongo import MongoClient
 
 import globals
+from phone_verify import verify_phone, get_bearer_token, available_verifications
+from email_verify import verify_email
 import verification
 
 CONNECTION_STRING = f'mongodb+srv://kjanuska:{globals.MONGO_PASSWORD}@cluster0.7zdns.mongodb.net/accounts?retryWrites=true&w=majority'
@@ -18,10 +20,13 @@ def init():
     for token_obj in tokens_db.find():
         token = encryptor.decrypt(token_obj["token"]).decode()
         tokens.append(token)
-    verification.get_bearer_token()
+    verification.init()
 
-def num_available():
+def num_invitable():
     return len(tokens)
+
+def num_creatable():
+    return available_verifications()
 
 def join(invite_code, message, emoji):
     invited_num = 0
@@ -159,10 +164,10 @@ def create_account():
         "captcha_key": captcha_key,
         "consent": True,
         "date_of_birth": date,
-        "email": email,
-        "fingerprint": fingerprint,
-        "password": password,
-        "username": username
+        # "email": email,
+        # "fingerprint": fingerprint,
+        # "password": password,
+        # "username": username
     }
 
     resp = requests.post(f"{globals.ENTRY}{REGISTER_ENDPOINT}", headers=header, json=data).json()
