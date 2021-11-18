@@ -3,3 +3,4 @@ requests
 python-dotenv
 cryptography
 discord-py-slash-command
+py-cord
