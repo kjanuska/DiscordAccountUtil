@@ -17,6 +17,7 @@ slash = SlashCommand(client, sync_commands=True)
 @client.event
 async def on_ready():
     util.init()
+    print("ready")
 
 @slash.slash(
     name="join",
@@ -82,5 +83,14 @@ async def _leave_all_servers(ctx):
 async def _creatable(ctx):
     max_creatable = util.num_creatable()
     await ctx.send(content=f"You can create {max_creatable} accounts")
+
+@slash.slash(
+    name="available",
+    description="Number of accounts you currently have",
+    guild_ids=GUILD_ID
+)
+async def _available(ctx):
+    max_available = util.num_invitable()
+    await ctx.send(content=f"You have {max_available} accounts")
 
 client.run(TOKEN)

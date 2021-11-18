@@ -1,0 +1,5 @@
+pymongo[snappy,gssapi,srv,tls]
+requests
+python-dotenv
+cryptography
+discord-py-slash-command
