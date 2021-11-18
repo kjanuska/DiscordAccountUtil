@@ -7,7 +7,7 @@ import secrets
 from pymongo import MongoClient
 
 import globals
-from phone_verify import verify_phone, get_bearer_token, available_verifications
+from phone_verify import verify_phone, available_verifications
 from email_verify import verify_email
 import verification
 
@@ -15,10 +15,10 @@ CONNECTION_STRING = f'mongodb+srv://kjanuska:{globals.MONGO_PASSWORD}@cluster0.7
 client = MongoClient(CONNECTION_STRING)
 tokens_db = client.accounts.tokens
 
-names = open('names.txt','r').read().splitlines()
-nouns = open('nouns.txt','r').read().splitlines()
-adjectives = open('adjectives.txt','r').read().splitlines()
-adverbs = open('adverbs.txt','r').read().splitlines()
+names = open('words/names.txt','r').read().splitlines()
+nouns = open('words/nouns.txt','r').read().splitlines()
+adjectives = open('words/adjectives.txt','r').read().splitlines()
+adverbs = open('words/adverbs.txt','r').read().splitlines()
 alphabet = []
 for c in string.ascii_letters:
     alphabet.append(c)
@@ -218,14 +218,12 @@ def create_account():
         "username": username
     }
 
-    resp = requests.post(f"{globals.ENTRY}{REGISTER_ENDPOINT}", headers=header, json=data).json()
+    resp = requests.post(f"{globals.ENTRY}{REGISTER_ENDPOINT}", json=data, headers=header).json()
     token = resp["token"]
     token_doc = {
         "token" : encryptor.encrypt(token.encode())
     }
     tokens.insert_one(token_doc)
 
-    verification.verify_email(token)
-    verification.verify_phone(token)
-
-create_account()
+    verify_email(token)
+    verify_phone(token)

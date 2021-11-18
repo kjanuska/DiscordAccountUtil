@@ -84,7 +84,6 @@ def get_code(request_id):
 
 
 def verify_phone(token):
-    # verify phone number
     PHONE_ENDPOINT = "/users/@me/phone"
     header = {
         "authorization": token,

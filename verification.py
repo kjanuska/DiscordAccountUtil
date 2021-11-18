@@ -1,7 +1,6 @@
 import requests
 import time
 
-import email_verify
 import phone_verify
 
 def init():
