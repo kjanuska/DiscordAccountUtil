@@ -1,4 +1,4 @@
-pymongo[snappy,gssapi,srv,tls]
+pymongo[gssapi,srv,tls]
 requests
 python-dotenv
 cryptography

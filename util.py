@@ -15,6 +15,15 @@ CONNECTION_STRING = f'mongodb+srv://kjanuska:{globals.MONGO_PASSWORD}@cluster0.7
 client = MongoClient(CONNECTION_STRING)
 tokens_db = client.accounts.tokens
 
+names = open('names.txt','r').read().splitlines()
+nouns = open('nouns.txt','r').read().splitlines()
+adjectives = open('adjectives.txt','r').read().splitlines()
+adverbs = open('adverbs.txt','r').read().splitlines()
+alphabet = []
+for c in string.ascii_letters:
+    alphabet.append(c)
+vowels = ["a", "e", "i", "o", "u", "y"]
+
 encryptor = Fernet(globals.ENCRYPTION_KEY)
 tokens = []
 
@@ -127,6 +136,39 @@ def leave_all_servers():
             time.sleep(2)
         time.sleep(10)
 
+def gen_username():
+    choice = random.randint(0, 6)
+    separator = random.randint(0, 4)
+    match choice:
+        case 0: # adjective + name
+            username = random.choice(adjectives) + " " + random.choice(names).lower()
+        case 1: # name + name
+            username = random.choice(names).lower() + " " + random.choice(names).lower()
+        case 2: # adverb + adjective
+            username = random.choice(adverbs).lower() + " " + random.choice(adjectives).lower()
+        case 3: # adjective + noun
+            match separator:
+                case 4: # use parentheses
+                    username = "(" + random.choice(adjectives).lower() + ")" + random.choice(nouns).lower()
+                case _: # separate with space
+                    username = random.choice(adjectives).lower() + " " + random.choice(nouns).lower()
+        case 4: # adverb + name
+            match separator:
+                case 4: # use parentheses
+                    username = "(" + random.choice(adverbs).lower() + ")" + random.choice(names).lower()
+                case _: # separate with space
+                    username = random.choice(adverbs).lower() + " " + random.choice(names).lower()
+        case 5: # random ascii
+            username = ""
+            for i in range(random.randint(3, 6)):
+                username += random.choice(alphabet)
+        case 6: # noun + noun
+            username = random.choice(nouns) + " " + random.choice(nouns)
+        case 6: # noun + random vowel
+            username = random.choice(nouns) + random.choice(vowels)
+    
+    return username
+
 def create_account():
     # ==========================================================================
     # Generate date of bith
@@ -137,20 +179,17 @@ def create_account():
     if day < 10:
         day = "0" + str(day)
     date = f"{random.randint(1970, 2001)}-{month}-{day}"
-    print(date)
     # ==========================================================================
 
     # ==========================================================================
     # Generate username
-    names = open('names.txt','r').read().splitlines()
-    adjectives = open('adjectives.txt','r').read().splitlines()
-    username = random.choice(names) + " " + random.choice(adjectives)
-    print(username)
+    username = gen_username()
     # ==========================================================================
 
     # ==========================================================================
     # Generate email using username + catchall
-    email = f"{username}@{globals.CATCHALL}"
+    email_user = username.replace(" ", "_").replace("(", "").replace(")", "_")
+    email = f"{email_user}@{globals.CATCHALL}"
     # ==========================================================================
 
     # ==========================================================================
@@ -189,22 +228,4 @@ def create_account():
     verification.verify_email(token)
     verification.verify_phone(token)
 
-def gen_username():
-    # Generate username
-    names = open('names.txt','r').read().splitlines()
-    adjectives = open('adjectives.txt','r').read().splitlines()
-
-    choice = random.randint(0, 3)
-    match choice:
-        case 0:
-            print(0)
-        case 1:
-            print(1)
-        case 2:
-            print(2)
-        case 3:
-            print(3)
-    username = random.choice(adjectives) + " " + random.choice(names)
-    print(username)
-
-gen_username
+create_account()
