@@ -42,12 +42,18 @@ async def on_ready():
             option_type=5,
             required=True,
         ),
+        create_option(
+            name="emoji-position",
+            description="(Optional) Position of reaction emoji if it is not the first one",
+            option_type=4,
+            required=False
+        )
     ],
 )
-async def _join(ctx, invite, message, emoji):
+async def _join(ctx, invite, message_link, emoji, emoji_pos=0):
     available_accnts = util.num_invitable()
     await ctx.send(content=f"Inviting {available_accnts} accounts")
-    util.join(invite, message, emoji)
+    util.join(invite, message_link, emoji, emoji_pos)
 
 @slash.slash(
     name="leave-server",
@@ -92,5 +98,27 @@ async def _creatable(ctx):
 async def _available(ctx):
     max_available = util.num_invitable()
     await ctx.send(content=f"You have {max_available} accounts")
+
+@slash.slash(
+    name="react",
+    description="Make all accounts in a server react to a specific message",
+    guild_ids=GUILD_ID,
+    options=[
+        create_option(
+            name="message",
+            description="Link to message in server",
+            option_type=3,
+            required=True,
+        ),
+        create_option(
+            name="emoji-position",
+            description="(Optional) Position of reaction emoji if it is not the first one",
+            option_type=4,
+            required=False
+        )
+    ]
+)
+async def _react(ctx, message_link, emoji_pos):
+    util.react(message_link, emoji_pos)
 
 client.run(TOKEN)

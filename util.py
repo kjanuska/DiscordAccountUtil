@@ -40,23 +40,63 @@ def num_invitable():
 def num_creatable():
     return available_verifications()
 
-def join(invite_code, message, emoji):
+def react_to_emoji(channel_id, message_id, emoji_pos, token):
+    header = {"authorization": token}
+    # ======================================================================
+    # get messages in channel
+    resp = requests.get(
+        f"{globals.ENTRY}/channels/{channel_id}/messages?limit=50",
+        headers=header,
+    )
+    message_list = resp.json()
+    for message in message_list:
+        if message["id"] == message_id:
+            # get the correct emoji for the message
+            emoji = message["reactions"][emoji_pos - 1]["emoji"]
+            break
+
+    # if the emoji is a unicode emoji
+    if not emoji["id"]:
+        emoji["id"] = ""
+        # convert emoji from unicode to string version of hex
+        emoji["name"] = emoji["name"].encode("utf-8").hex().upper()
+        # add % signs for correct url form
+        emoji["name"] = "%" + "%".join(
+            emoji["name"][i : i + 2] for i in range(0, len(emoji["name"]), 2)
+        )
+    else:
+        emoji["id"] = "%3A" + emoji["id"]
+    time.sleep(2)
+
+    # ======================================================================
+    # react to emoji
+    requests.put(
+        f"{globals.ENTRY}/channels/{channel_id}/messages/{message_id}/reactions/{emoji['name'] + emoji['id']}/%40me",
+        headers=header,
+    )
+
+def react(message_link, emoji_pos):
+    message_components = message_link.replace(
+        "https://discord.com/channels/", ""
+    ).split("/")
+    CHANNEL_ID = message_components[1]
+    MESSAGE_ID = message_components[2]
+    for token in tokens:
+        react_to_emoji(CHANNEL_ID, MESSAGE_ID, emoji_pos, token)
+
+def join(invite_code, message_link, emoji, emoji_pos):
     invited_num = 0
-    verification_message = True
-    if emoji == False:
-        verification_message = False
     INVITE_CODE = invite_code.replace("https://discord.gg/", "")
 
     # 0 = server ID
     # 1 = channel ID
     # 2 = message ID
-    message_components = message.replace(
+    message_components = message_link.replace(
         "https://discord.com/channels/", ""
     ).split("/")
     GUILD_ID = message_components[0]
     CHANNEL_ID = message_components[1]
     MESSAGE_ID = message_components[2]
-
     for token in tokens:
         header = {"authorization": token}
         # join server
@@ -81,38 +121,8 @@ def join(invite_code, message, emoji):
             resp = requests.put(f"{globals.ENTRY}/guilds/{GUILD_ID}/requests/@me", headers=verify_header, json=resp_json)
             time.sleep(5)
 
-        if verification_message == True:
-            # ======================================================================
-            # get message top emoji
-            resp = requests.get(
-                f"{globals.ENTRY}/channels/{CHANNEL_ID}/messages?limit=50",
-                headers=header,
-            )
-            message_list = resp.json()
-            for message in message_list:
-                if message["id"] == MESSAGE_ID:
-                    emoji = message["reactions"][0]["emoji"]
-                    break
-
-            # if the emoji is a unicode emoji
-            if not emoji["id"]:
-                emoji["id"] = ""
-                # convert emoji from unicode to string version of hex
-                emoji["name"] = emoji["name"].encode("utf-8").hex().upper()
-                # add % signs for correct url form
-                emoji["name"] = "%" + "%".join(
-                    emoji["name"][i : i + 2] for i in range(0, len(emoji["name"]), 2)
-                )
-            else:
-                emoji["id"] = "%3A" + emoji["id"]
-            time.sleep(2)
-
-            # ======================================================================
-            # react to emoji
-            requests.put(
-                f"{globals.ENTRY}/channels/{CHANNEL_ID}/messages/{MESSAGE_ID}/reactions/{emoji['name'] + emoji['id']}/%40me",
-                headers=header,
-            )
+        if emoji == True:
+            react(CHANNEL_ID, MESSAGE_ID, emoji_pos, token)
             
         # ======================================================================
         # sleep
