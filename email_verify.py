@@ -3,8 +3,9 @@ import imaplib, email
 from dotenv import load_dotenv
 import os
 import re
-import verification
 import quopri
+
+import verification
 
 load_dotenv()
 
@@ -21,22 +22,28 @@ con.login(USER, PASSWORD)
 # calling function to check for email under this label
 con.select("discord_verifications")
 
-def get_verification_email():
-    # fetching emails from Discord
-    data = con.search(None, 'ALL')
 
-    data = con.fetch('1', '(RFC822)')
+def get_verification_token():
+    # fetching emails from Discord
+    data = con.search(None, "ALL")
+
+    data = con.fetch("1", "(RFC822)")
     arr = data[1][0]
     if isinstance(arr, tuple):
-        msg = email.message_from_string(str(arr[1],'utf-8'))
+        msg = email.message_from_string(str(arr[1], "utf-8"))
         # decode quoted-printable encoding
-        body = quopri.decodestring(msg.get_payload()[0].get_payload()).decode('utf-8')
-        match = re.findall("Verify Email:.+", body)[0].strip().replace("Verify Email: ", "")
-    
-    resp = requests.get(match)
-    print(resp.text)
+        body = quopri.decodestring(msg.get_payload()[0].get_payload()).decode("utf-8")
+        match = (
+            re.findall("Verify Email:.+", body)[0].strip().replace("Verify Email: ", "")
+        )
 
-print(get_verification_email())
+    resp = requests.get(match)
+    return (
+        resp.history[0]
+        .headers["location"]
+        .replace("https://discord.com/verify#token=", "")
+    )
+
 
 def verify_email(token):
     # create account using catchall and then access verification link from main gmail
@@ -48,12 +55,13 @@ def verify_email(token):
         "content-type": "application/json",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
     }
+    verification_token = get_verification_token()
     data = {"token": verification_token}
 
-    resp = requests.post(f"{globals.ENTRY}{VERIFY_ENDPOINT}", headers=header, json=data)
+    resp = requests.post(f"{globals.ENTRY}{VERIFY_ENDPOINT}", json=data, headers=header)
     if resp.status_code == 400:
         catpcha_key = verification.get_captcha_key("verify")
         data["captcha_key"] = catpcha_key
         resp = requests.post(
-            f"{globals.ENTRY}{VERIFY_ENDPOINT}", headers=header, json=data
+            f"{globals.ENTRY}{VERIFY_ENDPOINT}", json=data, headers=header
         )

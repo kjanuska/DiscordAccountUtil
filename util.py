@@ -5,6 +5,7 @@ from cryptography.fernet import Fernet
 import string
 import secrets
 from pymongo import MongoClient
+import base64
 
 import globals
 from phone_verify import verify_phone, available_verifications
@@ -123,7 +124,7 @@ def leave_server(server_ID):
     for token in tokens:
         header = {"authorization": token}
         requests.delete(f"{globals.ENTRY}/users/@me/guilds/{server_ID}", headers=header)
-        time.sleep(10)
+        time.sleep(5)
 
 def leave_all_servers():
     for token in tokens:
@@ -134,7 +135,7 @@ def leave_all_servers():
             guild_id = server["id"]
             requests.delete(f"{globals.ENTRY}/users/@me/guilds/{guild_id}", headers=header)
             time.sleep(2)
-        time.sleep(10)
+        time.sleep(5)
 
 def gen_username():
     choice = random.randint(0, 6)
@@ -168,6 +169,20 @@ def gen_username():
             username = random.choice(nouns) + random.choice(vowels)
     
     return username
+
+def set_profile_picture(token):
+    header = {
+        "authorization" : token,
+        "content-type": "application/json",
+    }
+    # get random image from collection
+    with open(f"images/{random.randint(1, 1815)}.png", "rb") as image:
+        base64_image = base64.b64encode(image.read()).decode("utf-8") 
+    data = {
+        "avatar" : f"data:image/png;base64,{base64_image}"
+    }
+    PROFILE_ENDPOINT = "/users/@me"
+    resp = requests.patch(f"{globals.ENTRY}{PROFILE_ENDPOINT}", json=data, headers=header)
 
 def create_account():
     # ==========================================================================
@@ -223,7 +238,8 @@ def create_account():
     token_doc = {
         "token" : encryptor.encrypt(token.encode())
     }
-    tokens.insert_one(token_doc)
+    tokens_db.insert_one(token_doc)
 
     verify_email(token)
     verify_phone(token)
+    set_profile_picture(token)
