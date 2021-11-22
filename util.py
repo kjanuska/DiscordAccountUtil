@@ -1,3 +1,4 @@
+from bson.objectid import ObjectId
 import requests
 import time
 import random
@@ -7,12 +8,13 @@ import secrets
 from pymongo import MongoClient
 import base64
 
-import globals
+import environment
 from phone_verify import verify_phone, available_verifications
 from email_verify import verify_email
 import verification
+import environment
 
-CONNECTION_STRING = f'mongodb+srv://kjanuska:{globals.MONGO_PASSWORD}@cluster0.7zdns.mongodb.net/accounts?retryWrites=true&w=majority'
+CONNECTION_STRING = f'mongodb+srv://kjanuska:{environment.MONGO_PASSWORD}@cluster0.7zdns.mongodb.net/accounts?retryWrites=true&w=majority'
 client = MongoClient(CONNECTION_STRING)
 tokens_db = client.accounts.tokens
 
@@ -25,7 +27,7 @@ for c in string.ascii_letters:
     alphabet.append(c)
 vowels = ["a", "e", "i", "o", "u", "y"]
 
-encryptor = Fernet(globals.ENCRYPTION_KEY)
+encryptor = Fernet(environment.ENCRYPTION_KEY)
 tokens = []
 
 def init():
@@ -45,7 +47,7 @@ def react_to_emoji(channel_id, message_id, emoji_pos, token):
     # ======================================================================
     # get messages in channel
     resp = requests.get(
-        f"{globals.ENTRY}/channels/{channel_id}/messages?limit=50",
+        f"{environment.ENTRY}/channels/{channel_id}/messages?limit=50",
         headers=header,
     )
     message_list = resp.json()
@@ -71,7 +73,7 @@ def react_to_emoji(channel_id, message_id, emoji_pos, token):
     # ======================================================================
     # react to emoji
     requests.put(
-        f"{globals.ENTRY}/channels/{channel_id}/messages/{message_id}/reactions/{emoji['name'] + emoji['id']}/%40me",
+        f"{environment.ENTRY}/channels/{channel_id}/messages/{message_id}/reactions/{emoji['name'] + emoji['id']}/%40me",
         headers=header,
     )
 
@@ -101,7 +103,7 @@ def join(invite_code, message_link, emoji, emoji_pos):
         header = {"authorization": token}
         # join server
         invite_resp = requests.post(
-            f"{globals.ENTRY}/invites/{INVITE_CODE}", headers=header
+            f"{environment.ENTRY}/invites/{INVITE_CODE}", headers=header
         )
         invite_resp_json = invite_resp.json()
         inviter = invite_resp_json["inviter"]["username"] + "#" + invite_resp_json["inviter"]["discriminator"]
@@ -110,7 +112,7 @@ def join(invite_code, message_link, emoji, emoji_pos):
 
         # ======================================================================
         # need to verify server rules first
-        resp = requests.get(f"{globals.ENTRY}/guilds/{GUILD_ID}/member-verification?with_guild=false&invite_code={INVITE_CODE}", headers=header)
+        resp = requests.get(f"{environment.ENTRY}/guilds/{GUILD_ID}/member-verification?with_guild=false&invite_code={INVITE_CODE}", headers=header)
         resp_json = resp.json()
         time.sleep(3)
         if not "code" in resp_json.keys():
@@ -118,7 +120,7 @@ def join(invite_code, message_link, emoji, emoji_pos):
                 "authorization": header["authorization"],
                 "content-type": "application/json"
             }
-            resp = requests.put(f"{globals.ENTRY}/guilds/{GUILD_ID}/requests/@me", headers=verify_header, json=resp_json)
+            resp = requests.put(f"{environment.ENTRY}/guilds/{GUILD_ID}/requests/@me", headers=verify_header, json=resp_json)
             time.sleep(5)
 
         if emoji == True:
@@ -133,17 +135,17 @@ def join(invite_code, message_link, emoji, emoji_pos):
 def leave_server(server_ID):
     for token in tokens:
         header = {"authorization": token}
-        requests.delete(f"{globals.ENTRY}/users/@me/guilds/{server_ID}", headers=header)
+        requests.delete(f"{environment.ENTRY}/users/@me/guilds/{server_ID}", headers=header)
         time.sleep(5)
 
 def leave_all_servers():
     for token in tokens:
         header = {"authorization": token}
-        resp = requests.get(f"{globals.ENTRY}/users/@me/guilds", headers=header)
+        resp = requests.get(f"{environment.ENTRY}/users/@me/guilds", headers=header)
         time.sleep(2)
         for server in resp.json():
             guild_id = server["id"]
-            requests.delete(f"{globals.ENTRY}/users/@me/guilds/{guild_id}", headers=header)
+            requests.delete(f"{environment.ENTRY}/users/@me/guilds/{guild_id}", headers=header)
             time.sleep(2)
         time.sleep(5)
 
@@ -192,7 +194,7 @@ def set_profile_picture(token):
         "avatar" : f"data:image/png;base64,{base64_image}"
     }
     PROFILE_ENDPOINT = "/users/@me"
-    resp = requests.patch(f"{globals.ENTRY}{PROFILE_ENDPOINT}", json=data, headers=header)
+    resp = requests.patch(f"{environment.ENTRY}{PROFILE_ENDPOINT}", json=data, headers=header)
 
 def create_account():
     # ==========================================================================
@@ -214,11 +216,7 @@ def create_account():
     # ==========================================================================
     # Generate email using username + catchall
     email_user = username.replace(" ", "_").replace("(", "").replace(")", "_")
-    email = f"{email_user}@{globals.CATCHALL}"
-    # ==========================================================================
-
-    # ==========================================================================
-    # Generate fingerprint
+    email = f"{email_user}@{environment.CATCHALL}"
     # ==========================================================================
 
     # ==========================================================================
@@ -238,12 +236,11 @@ def create_account():
         "consent": True,
         "date_of_birth": date,
         "email": email,
-        # "fingerprint": fingerprint,
         "password": password,
         "username": username
     }
 
-    resp = requests.post(f"{globals.ENTRY}{REGISTER_ENDPOINT}", json=data, headers=header).json()
+    resp = requests.post(f"{environment.ENTRY}{REGISTER_ENDPOINT}", json=data, headers=header).json()
     token = resp["token"]
     token_doc = {
         "token" : encryptor.encrypt(token.encode())
@@ -253,3 +250,6 @@ def create_account():
     verify_email(token)
     verify_phone(token)
     set_profile_picture(token)
+    print(f"Username: {username}\nPassword: {password}\nToken: {token}")
+
+create_account()

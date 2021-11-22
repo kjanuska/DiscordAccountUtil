@@ -2,11 +2,11 @@ import requests
 import time
 import math
 
-import globals
+import environment
 import errors
 
 TEXT_ENTRY = "https://www.textverified.com/api"
-TEXT_ACCESS_TOKEN = globals.TEXT_API_KEY
+TEXT_ACCESS_TOKEN = environment.TEXT_API_KEY
 
 bearer_token = ""
 last_call = time.time()
@@ -27,7 +27,7 @@ def update_bearer_token():
     # token expires in 1 hour
     hours = (time.time() - last_call) / (60 * 60)
     # check if roughly 50 minutes have passed
-    if (hours + 0.16) > 1:
+    if (hours + 0.16) > 1 or bearer_token == "":
         get_bearer_token()
 
 
@@ -54,6 +54,7 @@ def available_verifications():
 
 
 def request_phone_number():
+    update_bearer_token()
     VERIFICATION_ENDPOINT = "/Verifications"
     header = {
         "Authorization": f"Bearer {bearer_token}"
@@ -61,6 +62,7 @@ def request_phone_number():
     data = {
         "id": 19
     }
+
     resp = requests.post(f"{TEXT_ENTRY}{VERIFICATION_ENDPOINT}", json=data, headers=header)
 
     if resp.status_code == 402:
@@ -90,12 +92,11 @@ def verify_phone(token):
         "content-type": "application/json",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
     }
-    update_bearer_token()
     verification_info = request_phone_number()
-    data = {"phone": verification_info[0]}
+    data = {"phone": f"+1{verification_info[0]}"}
 
     # send code to phone number
-    resp = requests.post(f"{globals.ENTRY}{PHONE_ENDPOINT}", headers=header, json=data)
+    resp = requests.post(f"{environment.ENTRY}{PHONE_ENDPOINT}", json=data, headers=header)
     time.sleep(5)
     CODE_ENDPOINT = "/phone-verifications/verify"
     # get code from Text Verified
@@ -103,6 +104,6 @@ def verify_phone(token):
     data["code"] = code
 
     # send verification code
-    resp = requests.post(f"{globals.ENTRY}{CODE_ENDPOINT}", headers=header, json=data)
+    resp = requests.post(f"{environment.ENTRY}{CODE_ENDPOINT}", json=data, headers=header)
     if resp.status_code == 400:
         print("Verification code incorrect")

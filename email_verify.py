@@ -6,6 +6,7 @@ import re
 import quopri
 
 import verification
+import environment
 
 load_dotenv()
 
@@ -58,10 +59,10 @@ def verify_email(token):
     verification_token = get_verification_token()
     data = {"token": verification_token}
 
-    resp = requests.post(f"{globals.ENTRY}{VERIFY_ENDPOINT}", json=data, headers=header)
+    resp = requests.post(f"{environment.ENTRY}{VERIFY_ENDPOINT}", json=data, headers=header)
     if resp.status_code == 400:
         catpcha_key = verification.get_captcha_key("verify")
         data["captcha_key"] = catpcha_key
         resp = requests.post(
-            f"{globals.ENTRY}{VERIFY_ENDPOINT}", json=data, headers=header
+            f"{environment.ENTRY}{VERIFY_ENDPOINT}", json=data, headers=header
         )
