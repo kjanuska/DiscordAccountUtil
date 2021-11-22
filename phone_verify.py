@@ -85,7 +85,7 @@ def get_code(request_id):
     return resp["code"]
 
 
-def verify_phone(token):
+def verify_phone(token, password):
     PHONE_ENDPOINT = "/users/@me/phone"
     header = {
         "authorization": token,
@@ -107,3 +107,13 @@ def verify_phone(token):
     resp = requests.post(f"{environment.ENTRY}{CODE_ENDPOINT}", json=data, headers=header)
     if resp.status_code == 400:
         print("Verification code incorrect")
+        return
+    
+    time.sleep(2)
+    phone_token = resp.json()["token"]
+    # retype password and use new token to verify account
+    verify_data = {
+        "password": password,
+        "phone_token" : phone_token
+    }
+    resp = requests.post(f"{environment.ENTRY}{PHONE_ENDPOINT}", json=verify_data, headers=header)

@@ -61,7 +61,7 @@ async def _join(ctx, invite, message_link, emoji, emoji_pos=0):
     guild_ids=GUILD_ID,
     options=[
         create_option(
-            name="server",
+            name="server-id",
             description="Server ID to leave",
             option_type=3,
             required=True,
@@ -82,11 +82,11 @@ async def _leave_all_servers(ctx):
     util.leave_all_servers()
 
 @slash.slash(
-    name="creatable",
+    name="balance",
     description="Get the number of accounts you can create",
     guild_ids=GUILD_ID
 )
-async def _creatable(ctx):
+async def _balance(ctx):
     max_creatable = util.num_creatable()
     await ctx.send(content=f"You can create {max_creatable} accounts")
 
@@ -118,7 +118,7 @@ async def _available(ctx):
         )
     ]
 )
-async def _react(ctx, message_link, emoji_pos):
+async def _react(ctx, message_link, emoji_pos=1):
     util.react(message_link, emoji_pos)
 
 client.run(TOKEN)

@@ -1,4 +1,3 @@
-from bson.objectid import ObjectId
 import requests
 import time
 import random
@@ -7,6 +6,7 @@ import string
 import secrets
 from pymongo import MongoClient
 import base64
+from pathlib import Path
 
 import environment
 from phone_verify import verify_phone, available_verifications
@@ -182,6 +182,13 @@ def gen_username():
     
     return username
 
+def gen_fingerprint():
+    ENDPOINT = "/auth/fingerprint"
+    resp = requests.post(f"{environment.ENTRY}{ENDPOINT}").json()
+    return resp["fingerprint"]
+
+gen_fingerprint()
+
 def set_profile_picture(token):
     header = {
         "authorization" : token,
@@ -213,14 +220,11 @@ def create_account():
     username = gen_username()
     # ==========================================================================
 
-    # TODO: Pretty sure the reason why the accounts are getting verification issues is
-    # because there is no fingerprint when the account is created
     # ==========================================================================
     # Generate fingerprint
-    fingerprint = ""
+    fingerprint = gen_fingerprint()
     # ==========================================================================
 
-    # TODO: using a catchall might raise flags
     # ==========================================================================
     # Generate email using username + catchall
     email_user = username.replace(" ", "_").replace("(", "").replace(")", "_")
@@ -236,7 +240,8 @@ def create_account():
     REGISTER_ENDPOINT = "/auth/register"
     header = {
         "content-type": "application/json",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
+        "x-super-properties" : Path('x-super-properties.txt').read_text()
     }
     captcha_key = verification.get_captcha_key("register")
     data = {
@@ -251,14 +256,12 @@ def create_account():
 
     resp = requests.post(f"{environment.ENTRY}{REGISTER_ENDPOINT}", json=data, headers=header).json()
     token = resp["token"]
-    # token_doc = {
-    #     "token" : encryptor.encrypt(token.encode())
-    # }
-    # tokens_db.insert_one(token_doc)
 
-    # verify_email(token)
-    # verify_phone(token)
-    # set_profile_picture(token)
-    print(f"Username: {username}\nPassword: {password}\nToken: {token}")
+    verify_phone(token, password)
+    verify_email(token)
+    set_profile_picture(token)
 
-create_account()
+    token_doc = {
+        "token" : encryptor.encrypt(token.encode())
+    }
+    tokens_db.insert_one(token_doc)
