@@ -8,7 +8,7 @@ Table of contents
 * [Requirements](#requirements)
 * [Installation](#installation)
 * [Commands](#commands)
-    * [Account Utilities](#account-util)
+    * [Account Utilities](#account-utilities)
     * [Server Management](#server-management)
 * [Appendix](#appendix)
 <!--te-->
@@ -71,9 +71,9 @@ GMAIL_PASS
 =================
 ## **Account Utilities**
 `/create [amount]`
-
-amount
-: The number of Discord accounts you can create. Limited by the number provided by `/balance`.
+| Parameter | Description |
+| ------ | ----------- |
+| amount | The number of Discord accounts you can create. Limited by the number provided by `/balance`.
 
 Create an *amount* number of Discord accounts. The program will generate random usernames, passwords, emails using a catchall, set a profile picture, and upload an encrypted version of the token to a database. See the [appendix](#appendix) for more information on usernames and profile pictures.
 
@@ -87,35 +87,30 @@ Get the number of Discord accounts you currently have created. Gets the number o
 
 `/react [message] (emoji-position)`
 
-message
-: The link to the message you wish to react to
-
-emoji-position
-: A parameter to specify the index of the emoji if there are multiple emojis on one message. Defaults to the first emoji if left blank.
+| Parameter | Description |
+| ------ | ----------- |
+| message | The link to the message you wish to react to 
+| emoji-position | A parameter to specify the index of the emoji if there are multiple emojis on one message. Defaults to the first emoji if left blank.
 
 React to an existing emoji on a message in a server that your accounts are currently in. The accounts must already be in the server in which are you trying to react to.
 
 ## **Server Management**
 `/join [invite] [message] [emoji] (emoji-position)`
 
-invite
-: A Discord invite code or link
-
-message
-: The link to the message you wish to react to
-
-emoji
-: A boolean asking if there is an emoji to react to in order to get access to the server.
-
-emoji-position
-: A parameter to specify the index of the emoji if there are multiple emojis on one message. Defaults to the first emoji if left blank.
+| Parameter | Description |
+| ------ | ----------- |
+| invite | A Discord invite code or link
+| message | The link to the message you wish to react to
+|emoji | A boolean asking if there is an emoji to react to in order to get access to the server.
+|emoji-position | A parameter to specify the index of the emoji if there are multiple emojis on one message. Defaults to the first emoji if left blank.
 
 Invite all of your current Discord accounts to a server, accept the server rules if they are exist, and optionally react to an emoji to gain access to the rest of the server.
 
 `/leave-server [server-id]`
 
-server-id
-: The ID of the server that your accounts should leave.
+| Parameter | Description |
+| ------ | ----------- |
+| server-id | The ID of the server that your accounts should leave.
 
 Make all accounts leave a specific server if they are in it.
 
