@@ -213,6 +213,14 @@ def create_account():
     username = gen_username()
     # ==========================================================================
 
+    # TODO: Pretty sure the reason why the accounts are getting verification issues is
+    # because there is no fingerprint when the account is created
+    # ==========================================================================
+    # Generate fingerprint
+    fingerprint = ""
+    # ==========================================================================
+
+    # TODO: using a catchall might raise flags
     # ==========================================================================
     # Generate email using username + catchall
     email_user = username.replace(" ", "_").replace("(", "").replace(")", "_")
@@ -236,20 +244,21 @@ def create_account():
         "consent": True,
         "date_of_birth": date,
         "email": email,
+        "fingerprint" : fingerprint,
         "password": password,
         "username": username
     }
 
     resp = requests.post(f"{environment.ENTRY}{REGISTER_ENDPOINT}", json=data, headers=header).json()
     token = resp["token"]
-    token_doc = {
-        "token" : encryptor.encrypt(token.encode())
-    }
-    tokens_db.insert_one(token_doc)
+    # token_doc = {
+    #     "token" : encryptor.encrypt(token.encode())
+    # }
+    # tokens_db.insert_one(token_doc)
 
-    verify_email(token)
-    verify_phone(token)
-    set_profile_picture(token)
+    # verify_email(token)
+    # verify_phone(token)
+    # set_profile_picture(token)
     print(f"Username: {username}\nPassword: {password}\nToken: {token}")
 
 create_account()
