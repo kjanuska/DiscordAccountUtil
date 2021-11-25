@@ -187,8 +187,6 @@ def gen_fingerprint():
     resp = requests.post(f"{environment.ENTRY}{ENDPOINT}").json()
     return resp["fingerprint"]
 
-gen_fingerprint()
-
 def set_profile_picture(token):
     header = {
         "authorization" : token,
