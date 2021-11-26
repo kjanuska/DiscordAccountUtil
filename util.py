@@ -8,6 +8,8 @@ from pymongo import MongoClient
 import base64
 from pathlib import Path
 
+from requests.api import head
+
 import environment
 from phone_verify import verify_phone, available_verifications
 from email_verify import verify_email
@@ -182,26 +184,60 @@ def gen_username():
     
     return username
 
-def gen_fingerprint():
-    ENDPOINT = "/auth/fingerprint"
-    resp = requests.post(f"{environment.ENTRY}{ENDPOINT}").json()
-    return resp["fingerprint"]
+def gen_fingerprint(session):
+    ENDPOINT = "/experiments"
+    return session.get(f"{environment.ENTRY}{ENDPOINT}").json()["fingerprint"]
 
-def set_profile_picture(token):
+def set_profile_picture(session, token):
     header = {
         "authorization" : token,
         "content-type": "application/json",
     }
-    # get random image from collection
+    # get random image from collection of 1815 images
     with open(f"images/{random.randint(1, 1815)}.png", "rb") as image:
         base64_image = base64.b64encode(image.read()).decode("utf-8") 
     data = {
         "avatar" : f"data:image/png;base64,{base64_image}"
     }
     PROFILE_ENDPOINT = "/users/@me"
-    resp = requests.patch(f"{environment.ENTRY}{PROFILE_ENDPOINT}", json=data, headers=header)
+    resp = session.patch(f"{environment.ENTRY}{PROFILE_ENDPOINT}", json=data, headers=header)
+
+def initiate(session, token):
+    headers = {
+        "user-agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+    }
+    time.sleep(0.5)
+    session.get("https://cdn.discordapp.com/bad-domains/hashes.json", headers=headers)
+    USER_ENDPOINT = "/users/@me"
+    USERS = "/affinities/users"
+    headers["authorization"] = token
+    time.sleep(0.5)
+    session.get(f"{environment.ENTRY}{USER_ENDPOINT}{USERS}", headers=headers)
+    GUILDS = "/affinities/guilds"
+    time.sleep(0.5)
+    session.get(f"{environment.ENTRY}{USER_ENDPOINT}{GUILDS}", headers=headers)
+    SURVEY = "/survey"
+    time.sleep(0.5)
+    session.get(f"{environment.ENTRY}{USER_ENDPOINT}{SURVEY}", headers=headers)
+    session.get("https://status.discord.com/api/v2/scheduled-maintenances/upcoming.json")
+    LIBRARY = "/library"
+    time.sleep(0.5)
+    session.get(f"{environment.ENTRY}{USER_ENDPOINT}{LIBRARY}", headers=headers)
+    DETECTABLE = "/applications/detectable"
+    time.sleep(0.5)
+    session.get(f"{environment.ENTRY}{DETECTABLE}", headers=headers)
+    COUNTRY_CODE = "/billing/country-code"
+    time.sleep(0.5)
+    session.get(f"{environment.ENTRY}{USER_ENDPOINT}{COUNTRY_CODE}", headers=headers)
+    SETTINGS = "/settings"
+    data = {
+        "timezone_offset": 360
+    }
+    time.sleep(0.5)
+    session.patch(f"{environment.ENTRY}{USER_ENDPOINT}{SETTINGS}", json=data, headers=headers)
 
 def create_account():
+    session = requests.Session()
     # ==========================================================================
     # Generate date of bith
     month = random.randint(1, 12)
@@ -220,7 +256,7 @@ def create_account():
 
     # ==========================================================================
     # Generate fingerprint
-    fingerprint = gen_fingerprint()
+    fingerprint = gen_fingerprint(session)
     # ==========================================================================
 
     # ==========================================================================
@@ -234,11 +270,15 @@ def create_account():
     alphabet = string.ascii_letters + string.digits
     password = ''.join(secrets.choice(alphabet) for i in range(20))
     # ==========================================================================
-
+    resp = session.get("https://discord.com/")
     REGISTER_ENDPOINT = "/auth/register"
     header = {
+        "accept": "*/*",
+        "accept-encoding": "gzip, deflate, br",
         "content-type": "application/json",
+        "origin": "https://discord.com",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
+        "x-fingerprint" : fingerprint,
         "x-super-properties" : Path('x-super-properties.txt').read_text()
     }
     captcha_key = verification.get_captcha_key("register")
@@ -248,18 +288,23 @@ def create_account():
         "date_of_birth": date,
         "email": email,
         "fingerprint" : fingerprint,
+        "gift_code_sku_id": None,
+        "invite": None,
         "password": password,
         "username": username
     }
 
-    resp = requests.post(f"{environment.ENTRY}{REGISTER_ENDPOINT}", json=data, headers=header).json()
+    resp = session.post(f"{environment.ENTRY}{REGISTER_ENDPOINT}", json=data, headers=header).json()
     token = resp["token"]
+    initiate(session, token)
+    print(f"Username: {username}\nPassword: {password}\nToken: {token}")
+    # verify_phone(token, password)
+    # verify_email(token)
+    # set_profile_picture(session, token)
 
-    verify_phone(token, password)
-    verify_email(token)
-    set_profile_picture(token)
+    # token_doc = {
+    #     "token" : encryptor.encrypt(token.encode())
+    # }
+    # tokens_db.insert_one(token_doc)
 
-    token_doc = {
-        "token" : encryptor.encrypt(token.encode())
-    }
-    tokens_db.insert_one(token_doc)
+create_account()
