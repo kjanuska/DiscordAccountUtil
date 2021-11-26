@@ -206,34 +206,34 @@ def initiate(session, token):
     headers = {
         "user-agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
     }
-    time.sleep(0.5)
+    time.sleep(random.uniform(0,1))
     session.get("https://cdn.discordapp.com/bad-domains/hashes.json", headers=headers)
     USER_ENDPOINT = "/users/@me"
     USERS = "/affinities/users"
     headers["authorization"] = token
-    time.sleep(0.5)
+    time.sleep(random.uniform(0,1))
     session.get(f"{environment.ENTRY}{USER_ENDPOINT}{USERS}", headers=headers)
     GUILDS = "/affinities/guilds"
-    time.sleep(0.5)
+    time.sleep(random.uniform(0,1))
     session.get(f"{environment.ENTRY}{USER_ENDPOINT}{GUILDS}", headers=headers)
     SURVEY = "/survey"
-    time.sleep(0.5)
+    time.sleep(random.uniform(0,1))
     session.get(f"{environment.ENTRY}{USER_ENDPOINT}{SURVEY}", headers=headers)
     session.get("https://status.discord.com/api/v2/scheduled-maintenances/upcoming.json")
     LIBRARY = "/library"
-    time.sleep(0.5)
+    time.sleep(random.uniform(0,1))
     session.get(f"{environment.ENTRY}{USER_ENDPOINT}{LIBRARY}", headers=headers)
     DETECTABLE = "/applications/detectable"
-    time.sleep(0.5)
+    time.sleep(random.uniform(0,1))
     session.get(f"{environment.ENTRY}{DETECTABLE}", headers=headers)
     COUNTRY_CODE = "/billing/country-code"
-    time.sleep(0.5)
+    time.sleep(random.uniform(0,1))
     session.get(f"{environment.ENTRY}{USER_ENDPOINT}{COUNTRY_CODE}", headers=headers)
     SETTINGS = "/settings"
     data = {
         "timezone_offset": 360
     }
-    time.sleep(0.5)
+    time.sleep(random.uniform(0,1))
     session.patch(f"{environment.ENTRY}{USER_ENDPOINT}{SETTINGS}", json=data, headers=headers)
 
 def create_account():
@@ -270,20 +270,29 @@ def create_account():
     alphabet = string.ascii_letters + string.digits
     password = ''.join(secrets.choice(alphabet) for i in range(20))
     # ==========================================================================
-    resp = session.get("https://discord.com/")
+    session.post("https://discord.com/", verify=True)
+    content_length = len(fingerprint) + len(email) + len(username) + len(password) + len(date)
     REGISTER_ENDPOINT = "/auth/register"
     header = {
         "accept": "*/*",
         "accept-encoding": "gzip, deflate, br",
+        "accept-language": "en-US",
+        "content-length": f"{148 + content_length}",
         "content-type": "application/json",
         "origin": "https://discord.com",
+        "referer": "https://discord.com/register",
+        "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "Windows",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
         "x-fingerprint" : fingerprint,
         "x-super-properties" : Path('x-super-properties.txt').read_text()
     }
-    captcha_key = verification.get_captcha_key("register")
     data = {
-        "captcha_key": captcha_key,
+        "captcha_key": None,
         "consent": True,
         "date_of_birth": date,
         "email": email,
@@ -293,9 +302,15 @@ def create_account():
         "password": password,
         "username": username
     }
-
-    resp = session.post(f"{environment.ENTRY}{REGISTER_ENDPOINT}", json=data, headers=header).json()
-    token = resp["token"]
+    time.sleep(1)
+    resp = session.post(f"{environment.ENTRY}{REGISTER_ENDPOINT}", json=data, headers=header, verify=True)
+    if resp.status_code == 400:
+        captcha_key = verification.get_captcha_key("register")
+        data["captcha_key"] = captcha_key
+        data["content-length"] = f"{144 + content_length + len(captcha_key)}"
+        resp = session.post(f"{environment.ENTRY}{REGISTER_ENDPOINT}", json=data, headers=header, verify=True)
+    
+    token = resp.json()["token"]
     initiate(session, token)
     print(f"Username: {username}\nPassword: {password}\nToken: {token}")
     # verify_phone(token, password)
