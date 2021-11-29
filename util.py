@@ -307,7 +307,7 @@ def create_account():
     if resp.status_code == 400:
         captcha_key = verification.get_captcha_key("register")
         data["captcha_key"] = captcha_key
-        data["content-length"] = f"{144 + content_length + len(captcha_key)}"
+        data["content-length"] = f"{146 + content_length + len(captcha_key)}"
         resp = session.post(f"{environment.ENTRY}{REGISTER_ENDPOINT}", json=data, headers=header, verify=True)
     
     token = resp.json()["token"]
