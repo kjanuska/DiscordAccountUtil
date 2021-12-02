@@ -28,7 +28,7 @@ Developed with `Python 3.10.0` but any version above `3.6.0` should work. The fo
 **Requirements**
 =================
 The items listed below are required in the current version of the program. In later versions, these requirements may change to be more flexible.
-- For ease-of-use, the way of interacting with these utilities is done via a Discord bot. This requires setting up a [Discord application](https://discord.com/developers/applications) and creating a [bot](https://discordpy.readthedocs.io/en/stable/discord.html).
+- The way of interacting with these utilities is done via a Discord bot. This requires setting up a [Discord application](https://discord.com/developers/applications) and creating a [bot](https://discordpy.readthedocs.io/en/stable/discord.html).
 - A MongoDB cluster is required to store tokens.
 - A Fernet key is used to encrypt/decrypt the tokens in the cloud.
 - 2Captcha is required to solve HCaptchas.

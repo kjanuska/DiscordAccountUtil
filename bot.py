@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from discord_slash.utils.manage_commands import create_option, create_choice
 import os
 
+import accounts
 import util
 
 load_dotenv()
