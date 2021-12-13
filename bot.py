@@ -44,17 +44,17 @@ async def on_ready():
             required=True,
         ),
         create_option(
-            name="emoji-position",
+            name="emoji_position",
             description="(Optional) Position of reaction emoji if it is not the first one",
             option_type=4,
             required=False
         )
     ],
 )
-async def _join(ctx, invite, message_link, emoji, emoji_pos=0):
+async def _join(ctx, invite, message, emoji, emoji_position=0):
     available_accnts = util.num_invitable()
     await ctx.send(content=f"Inviting {available_accnts} accounts")
-    util.join(invite, message_link, emoji, emoji_pos)
+    util.join(invite, message, emoji, emoji_position)
 
 @slash.slash(
     name="leave-server",
