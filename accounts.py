@@ -6,6 +6,16 @@ import base64
 from pathlib import Path
 import time
 
+from selenium import webdriver
+from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.common import keys
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+driver = webdriver.Chrome("./chromedriver.exe")
+
 from verification import get_captcha_key
 from phone_verify import verify_phone
 from email_verify import verify_email
@@ -188,3 +198,29 @@ def create_account():
     # set_profile_picture(session, token)
 
     upload(token)
+
+def selenium_test():
+    driver.get("https://discord.com/register")
+
+    username = gen_username()
+    email = username.replace(" ", "_").replace("(", "").replace(")", "_")
+    email = f"{email}@{environment.CATCHALL}"
+    month = random.randint(1,12)
+    day = random.randint(1,28)
+    year = random.randint(1970, 2001)
+    alphabet = string.ascii_letters + string.digits
+    password = ''.join(secrets.choice(alphabet) for i in range(20))
+
+    WebDriverWait(driver, 5).until(
+        EC.presence_of_element_located((By.NAME, "email"))
+    ).send_keys(email)
+    driver.find_element(By.NAME, "username").send_keys(username)
+    driver.find_element(By.NAME, "password").send_keys(password)
+    month_form = driver.find_element(By.ID, "react-select-2-input")
+    month_form.send_keys(month)
+    month_form.send_keys(Keys.TAB)
+    driver.find_element(By.ID, "react-select-3-input").send_keys(day)
+    driver.find_element(By.ID, "react-select-4-input").send_keys(year)
+    driver.find_element(By.CLASS_NAME, "button-3k0cO7").click()
+    # driver.quit()
+selenium_test()
