@@ -1,10 +1,9 @@
 from discord_slash import SlashCommand
 from discord.ext import commands
 from dotenv import load_dotenv
-from discord_slash.utils.manage_commands import create_option, create_choice
+from discord_slash.utils.manage_commands import create_option
 import os
 
-import accounts
 import util
 
 load_dotenv()
@@ -82,14 +81,14 @@ async def _leave_all_servers(ctx):
     await ctx.send(content=f"All accounts leaving all servers")
     util.leave_all_servers()
 
-@slash.slash(
-    name="balance",
-    description="Get the number of accounts you can create",
-    guild_ids=GUILD_ID
-)
-async def _balance(ctx):
-    max_creatable = util.num_creatable()
-    await ctx.send(content=f"You can create {max_creatable} accounts")
+# @slash.slash(
+#     name="balance",
+#     description="Get the number of accounts you can create",
+#     guild_ids=GUILD_ID
+# )
+# async def _balance(ctx):
+#     max_creatable = util.num_creatable()
+#     await ctx.send(content=f"You can create {max_creatable} accounts")
 
 @slash.slash(
     name="available",
@@ -121,5 +120,22 @@ async def _available(ctx):
 )
 async def _react(ctx, message_link, emoji_pos=1):
     util.react(message_link, emoji_pos)
+
+@slash.slash(
+    name="add",
+    description="Upload a token to the database",
+    guild_ids=GUILD_ID,
+    options=[
+        create_option(
+            name="token",
+            description="Account token",
+            option_type=3,
+            required=True,
+        )
+    ]
+)
+async def _add(ctx, token):
+    util.upload(token)#lala lalala bumble bumble gweh
+    await ctx.reply(f"You now have {util.num_invitable()} accounts.", mention_author=False)
 
 client.run(TOKEN)

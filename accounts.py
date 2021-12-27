@@ -14,8 +14,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-driver = webdriver.Chrome("./chromedriver.exe")
-
 from verification import get_captcha_key
 from phone_verify import verify_phone
 from email_verify import verify_email
@@ -200,6 +198,7 @@ def create_account():
     upload(token)
 
 def selenium_test():
+    driver = webdriver.Chrome("./chromedriver.exe")
     driver.get("https://discord.com/register")
 
     username = gen_username()
@@ -223,4 +222,3 @@ def selenium_test():
     driver.find_element(By.ID, "react-select-4-input").send_keys(year)
     driver.find_element(By.CLASS_NAME, "button-3k0cO7").click()
     # driver.quit()
-selenium_test()
