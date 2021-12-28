@@ -70,7 +70,7 @@ def react_to_emoji(channel_id, message_id, emoji_pos, token):
         headers=header,
     )
 
-def react(message_link, emoji_pos):
+def react_all(message_link, emoji_pos):
     message_components = message_link.replace(
         "https://discord.com/channels/", ""
     ).split("/")
@@ -117,7 +117,7 @@ def join(invite_code, message_link, emoji, emoji_pos):
             time.sleep(5)
 
         if emoji == True:
-            react(CHANNEL_ID, MESSAGE_ID, emoji_pos, token)
+            react_to_emoji(CHANNEL_ID, MESSAGE_ID, emoji_pos, token)
             
         # ======================================================================
         # sleep
